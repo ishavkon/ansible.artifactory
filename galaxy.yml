@@ -1,6 +1,6 @@
 ---
 namespace: shahargolshani
-name: ansible.artifactory
+name: artifactory
 version: 0.1.0
 readme: README.md
 authors:

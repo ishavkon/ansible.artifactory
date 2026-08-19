@@ -1,0 +1,4 @@
+---
+- name: Test Artifactory Download Module
+  ansible.builtin.include_tasks:
+    file: download.yml

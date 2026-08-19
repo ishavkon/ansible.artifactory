@@ -10,6 +10,7 @@ description:
   - Uses the httpapi connection plugin for authentication and API access.
   - Connection details (URL, credentials, SSL) are configured in inventory.
   - Supports idempotency via SHA-256 checksum comparison.
+  - Provides an option for getting metadata about the artifact in a JSON format.
 options:
   repo:
     description: The name of the Artifactory repository.
@@ -36,6 +37,12 @@ options:
     required: false
     type: bool
     default: false
+  metadata:
+    description:
+      - Provides information about the artifact that is being downloaded (checksum, size, actual_md5, actual_sha1, etc.)
+    required: false
+    type: bool
+    default: false
 author:
   - Ansible Artifactory Collection Authors
 """
@@ -43,50 +50,85 @@ author:
 EXAMPLES = r"""
 # inventory.networking
 # [artifactory]
-# https://repo.cci.nokia.net/artifactory
+# https://repo.example.com
 #
 # [artifactory:vars]
 # ansible_connection=httpapi
-# ansible_network_os=ansible.artifactory.artifactory_api_client
+# ansible_network_os=shahargolshani.artifactory.artifactory_api_client
 # ansible_httpapi_use_ssl=true
 # ansible_httpapi_validate_certs=false
-# ansible_user=jfrog
 # ansible_httpapi_token=<token>
 
-- name: Download an RPM from Artifactory
-  ansible.artifactory.artifactory_download:
-    repo: cbis-generic-releases
-    path: cbis_vlab_repo/24.7.0/ncs/506
-    name: patchiso-24.7.0-506.os8.noarch.rpm
+- name: Download an artifact from Artifactory
+  shahargolshani.artifactory.artifactory_download:
+    repo: my-generic-repo
+    path: my-project/1.0.0
+    name: artifact-1.0.0.rpm
     dest: /tmp/artifacts
 
 - name: Force re-download even if file exists
-  ansible.artifactory.artifactory_download:
-    repo: cbis-generic-releases
-    path: cbis_vlab_repo/24.7.0/ncs/506
-    name: patchiso-24.7.0-506.os8.noarch.rpm
+  shahargolshani.artifactory.artifactory_download:
+    repo: my-generic-repo
+    path: my-project/1.0.0
+    name: artifact-1.0.0.rpm
     dest: /tmp/artifacts
     force: true
+
+- name: Download artifact and save metadata to YAML file
+  shahargolshani.artifactory.artifactory_download:
+    repo: my-generic-repo
+    path: my-project/1.0.0
+    name: artifact-1.0.0.rpm
+    dest: /tmp/artifacts
+    metadata: true
 """
 
 RETURN = r"""
+changed:
+  description: Whether the module made any changes.
+  returned: always
+  type: bool
+  sample: true
 dest:
   description: The full path to the downloaded file.
   returned: success
   type: str
-  sample: /tmp/artifacts/patchiso-24.7.0-506.os8.noarch.rpm
+  sample: /tmp/artifacts/artifact-1.0.0.rpm
+failed:
+  description: Whether the module failed.
+  returned: failure
+  type: bool
+  sample: false
 checksum:
   description: The SHA-256 checksum of the downloaded file.
   returned: success
   type: str
+  sample: 9280cd62338ffe27297c2bd8b15cf55b1830e9efb14842f9c89316a4c94294ca
 size:
   description: The size of the downloaded file in bytes.
   returned: success
   type: int
+  sample: 14564
+remote_size:
+  description: The size of the artifact in Artifactory in bytes.
+  returned: always
+  type: int
+  sample: 14564
+metadata_file:
+  description: Path to the metadata YAML file containing artifact information.
+  returned: when metadata is true and download succeeds
+  type: str
+  sample: /tmp/artifacts/artifact-1.0.0.rpm.metadata.yaml
+msg:
+  description: A message describing the result of the operation.
+  returned: always
+  type: str
+  sample: Artifact downloaded successfully.
 """
 
 import hashlib
 import json
+import yaml
 import os
 import tempfile
 
@@ -116,7 +158,7 @@ def get_artifact_info(connection, repo, path, name):
     )
     response, response_code = connection.send_request(
         data=aql_query,
-        path="/api/search/aql",
+        path="/artifactory/api/search/aql",
         method="POST",
         headers={"Content-Type": "text/plain"},
     )
@@ -131,6 +173,15 @@ def get_artifact_info(connection, repo, path, name):
         return None
     return results[0]
 
+def create_metadata_yaml(artifact_info, dest_dir, artifact_name):
+    """Create metadata YAML file for the artifact."""
+    metadata_filename = f"{artifact_name}.metadata.yaml"
+    metadata_path = os.path.join(dest_dir, metadata_filename)
+
+    with open(metadata_path, 'w') as file:
+        yaml.dump(artifact_info, file, default_flow_style=False)
+
+    return metadata_path
 
 def download_artifact(connection, repo, path, name, dest_dir):
     """Download the artifact via the httpapi connection and save to dest_dir."""
@@ -160,7 +211,7 @@ def download_artifact(connection, repo, path, name, dest_dir):
     return dest_file
 
 
-def run_module():
+def main():
     module = AnsibleModule(
         argument_spec=dict(
             repo=dict(type="str", required=True),
@@ -168,6 +219,7 @@ def run_module():
             name=dict(type="str", required=True),
             dest=dict(type="path", default="."),
             force=dict(type="bool", default=False),
+            metadata=dict(type="bool", default=False),
         ),
         supports_check_mode=True,
     )
@@ -177,12 +229,12 @@ def run_module():
     name = module.params["name"]
     dest = module.params["dest"]
     force = module.params["force"]
+    metadata = module.params["metadata"]
 
     dest_file = os.path.join(dest, name)
     result = dict(changed=False, dest=dest_file)
 
     connection = Connection(module._socket_path)
-    connection.print_debug(f"----------------------------------------------------------")
 
     try:
         artifact_info = get_artifact_info(connection, repo, path, name)
@@ -224,15 +276,17 @@ def run_module():
             msg=f"Checksum mismatch after download. Expected {remote_sha256}, got {local_sha256}.",
             **result,
         )
+    if metadata:
+        try:
+            metadata_file = create_metadata_yaml(artifact_info, dest, name)
+            result['metadata_file'] = metadata_file
+        except Exception as e:
+            module.fail_json(msg=f"Failed to create metadata: {e}", **result)
 
     result["changed"] = True
     result["checksum"] = local_sha256
     result["size"] = os.path.getsize(dest_file)
     module.exit_json(msg="Artifact downloaded successfully.", **result)
-
-
-def main():
-    run_module()
 
 
 if __name__ == "__main__":

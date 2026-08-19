@@ -1,0 +1,8 @@
+---
+# Default test artifact — override via --extra-vars to point at a real artifact in your Artifactory instance.
+test_repo: "my-generic-repo"
+test_path: "my-project/1.0.0"
+test_artifact_name: "artifact-1.0.0.rpm"
+
+# Local destination for downloaded artifacts
+test_dest_dir: "/tmp/ansible-artifactory-test"

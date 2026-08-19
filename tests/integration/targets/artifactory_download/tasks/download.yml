@@ -1,0 +1,148 @@
+---
+- name: artifactory_download integration tests
+  block:
+
+    # ── SETUP ────────────────────────────────────────────────────────────────
+    - name: Setup - create local destination directory
+      ansible.builtin.file:
+        path: "{{ test_dest_dir }}"
+        state: directory
+        mode: "0755"
+
+    # ── HAPPY PATH ───────────────────────────────────────────────────────────
+    - name: Test - download artifact (first run)
+      shahargolshani.artifactory.artifactory_download:
+        repo: "{{ test_repo }}"
+        path: "{{ test_path }}"
+        name: "{{ test_artifact_name }}"
+        dest: "{{ test_dest_dir }}"
+        metadata: true
+      register: result_first
+
+    - name: Verify - first run changed and returned expected fields
+      ansible.builtin.assert:
+        that:
+          - result_first.changed == true
+          - result_first.dest is defined
+          - result_first.checksum is defined
+          - result_first.size is defined
+          - result_first.metadata_file is defined
+        fail_msg: "First download must succeed, report changed, and return dest/checksum/size/metadata_file"
+
+    - name: Verify - downloaded file exists on disk
+      ansible.builtin.stat:
+        path: "{{ result_first.dest }}"
+      register: downloaded_file
+
+    - name: Assert - file is present after download
+      ansible.builtin.assert:
+        that:
+          - downloaded_file.stat.exists == true
+          - downloaded_file.stat.size > 0
+        fail_msg: "Downloaded file must exist and be non-empty"
+
+    # ── IDEMPOTENCY ──────────────────────────────────────────────────────────
+    - name: Test - download artifact (second run, idempotency check)
+      shahargolshani.artifactory.artifactory_download:
+        repo: "{{ test_repo }}"
+        path: "{{ test_path }}"
+        name: "{{ test_artifact_name }}"
+        dest: "{{ test_dest_dir }}"
+      register: result_idempotent
+
+    - name: Verify - second run not changed (checksums match)
+      ansible.builtin.assert:
+        that:
+          - result_idempotent.changed == false
+          - result_idempotent.checksum == result_first.checksum
+        fail_msg: "Second run must not report changed — checksum already matches"
+
+    # ── FORCE RE-DOWNLOAD ────────────────────────────────────────────────────
+    - name: Test - force re-download even when file exists
+      shahargolshani.artifactory.artifactory_download:
+        repo: "{{ test_repo }}"
+        path: "{{ test_path }}"
+        name: "{{ test_artifact_name }}"
+        dest: "{{ test_dest_dir }}"
+        force: true
+      register: result_force
+
+    - name: Verify - force causes re-download
+      ansible.builtin.assert:
+        that:
+          - result_force.changed == true
+        fail_msg: "force=true must always report changed and re-download"
+
+    # ── CHECK MODE ───────────────────────────────────────────────────────────
+    - name: Setup for check mode - remove local file so module would act
+      ansible.builtin.file:
+        path: "{{ test_dest_dir }}/{{ test_artifact_name }}"
+        state: absent
+
+    - name: Test - check mode does not download
+      shahargolshani.artifactory.artifactory_download:
+        repo: "{{ test_repo }}"
+        path: "{{ test_path }}"
+        name: "{{ test_artifact_name }}"
+        dest: "{{ test_dest_dir }}"
+      check_mode: true
+      register: result_check_mode
+
+    - name: Verify - check mode reports would-change
+      ansible.builtin.assert:
+        that:
+          - result_check_mode.changed == true
+        fail_msg: "Check mode must report changed without actually downloading"
+
+    - name: Verify - file is absent after check mode run
+      ansible.builtin.stat:
+        path: "{{ test_dest_dir }}/{{ test_artifact_name }}"
+      register: check_mode_stat
+
+    - name: Assert - file was not written during check mode
+      ansible.builtin.assert:
+        that:
+          - check_mode_stat.stat.exists == false
+        fail_msg: "File must not be written to disk during check mode"
+
+    # ── ERROR CASES ──────────────────────────────────────────────────────────
+    - name: Error test - artifact path does not exist
+      shahargolshani.artifactory.artifactory_download:
+        repo: "{{ test_repo }}"
+        path: "nonexistent/path/that/does/not/exist"
+        name: "no-such-artifact-xyz.rpm"
+        dest: "{{ test_dest_dir }}"
+      register: result_missing
+      ignore_errors: true
+
+    - name: Verify - fails gracefully when artifact is not found
+      ansible.builtin.assert:
+        that:
+          - result_missing.failed == true
+          - result_missing.msg is defined
+        fail_msg: "Module must fail with a descriptive message when artifact does not exist"
+
+    - name: Error test - invalid authentication token
+      shahargolshani.artifactory.artifactory_download:
+        repo: "{{ test_repo }}"
+        path: "{{ test_path }}"
+        name: "{{ test_artifact_name }}"
+        dest: "{{ test_dest_dir }}"
+      vars:
+        ansible_httpapi_token: "invalid-token-00000"
+      register: result_bad_token
+      ignore_errors: true
+
+    - name: Verify - fails when token is rejected by Artifactory
+      ansible.builtin.assert:
+        that:
+          - result_bad_token.failed == true
+        fail_msg: "Module must fail when the authentication token is invalid"
+
+  # ── TEARDOWN (always runs, even on test failure) ──────────────────────────
+  always:
+    - name: Teardown - remove local test directory and all downloaded files
+      ansible.builtin.file:
+        path: "{{ test_dest_dir }}"
+        state: absent
+      ignore_errors: true
