@@ -10,9 +10,9 @@ description: Ansible Collection for Jfrog Artifactory
 license_file: LICENSE
 tags:
   - linux
-repository: https://github.com/shahargolshani/ansible.artifactory 
-homepage: https://github.com/shahargolshani/ansible.artifactory
-issues: https://github.com/shahargolshani/ansible.artifactory/issues
+repository: https://github.com/ishavkon/ansible.artifactory
+homepage: https://github.com/ishavkon/ansible.artifactory
+issues: https://github.com/ishavkon/ansible.artifactory/issues
 build_ignore:
   - .gitignore
   - changelogs/.plugin-cache.yaml

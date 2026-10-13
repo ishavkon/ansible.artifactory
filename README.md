@@ -1,152 +1,136 @@
-# collection_template
-You can build a new repository for an Ansible Collection using this template by following [Creating a repository from a template](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template). This README.md contains recommended headings for your collection README.md, with comments describing what each section should contain. Once you have created your collection repository, delete this paragraph and the title above it from your README.md.
+# shahargolshani.artifactory
 
-# Foo Collection for Ansible
-<!-- Add CI and code coverage badges here. Samples included below. -->
-[![CI](https://github.com/ansible-collections/REPONAMEHERE/workflows/CI/badge.svg?event=push)](https://github.com/ansible-collections/REPONAMEHERE/actions) [![Codecov](https://img.shields.io/codecov/c/github/ansible-collections/REPONAMEHERE)](https://codecov.io/gh/ansible-collections/REPONAMEHERE)
+[![CI](https://github.com/ishavkon/ansible.artifactory/actions/workflows/ansible-test.yml/badge.svg)](https://github.com/ishavkon/ansible.artifactory/actions/workflows/ansible-test.yml)
 
-<!-- Describe the collection and why a user would want to use it. What does the collection do? -->
+An Ansible collection for interacting with [JFrog Artifactory](https://jfrog.com/artifactory/). It uses a dedicated `httpapi` connection plugin to talk to the Artifactory REST API, so modules never make direct HTTP calls themselves — authentication, SSL, and request handling are all configured once in your inventory.
 
-## Our mission
+Currently the collection provides a single module for downloading artifacts, with idempotent, checksum-verified downloads.
 
-<!-- Put your collection's mission statement in here. Example follows. -->
+## Requirements
 
-At the `your collection name`, our mission is to produce and maintain simple, flexible,
-and powerful open-source software tailored to `your collection purpose`.
+- ansible-core >= 2.16.0
+- Python 3.8+
+- Network access from the Ansible controller to your Artifactory instance's REST API
+- A valid Artifactory API/access token, or a username and password for Basic auth
 
-We welcome members from all skill levels to participate actively in our open, inclusive, and vibrant community.
-Whether you are an expert or just beginning your journey with Ansible and `your collection name`,
-you are encouraged to contribute, share insights, and collaborate with fellow enthusiasts!
+## Installation
 
-## Code of Conduct
+Install the collection from Ansible Galaxy:
 
-We follow the [Ansible Code of Conduct](https://docs.ansible.com/projects/ansible/devel/community/code_of_conduct.html) in all our interactions within this project.
-
-If you encounter abusive behavior, please refer to the [policy violations](https://docs.ansible.com/projects/ansible/devel/community/code_of_conduct.html#policy-violations) section of the Code for information on how to raise a complaint.
-
-## Communication
-
-<!--
-If your collection is not present on the Ansible forum yet, please check out the existing [tags](https://forum.ansible.com/tags) and [groups](https://forum.ansible.com/g) - use what suits your collection. If there is no appropriate tag and group yet, please [request one](https://forum.ansible.com/t/requesting-a-forum-group/503/17).
--->
-
-* Join the Ansible forum:
-  * [Get Help](https://forum.ansible.com/c/help/6): get help or help others. Please add appropriate tags if you start new discussions, for example the `YOUR TAG` tag.
-  * [Posts tagged with 'your tag'](https://forum.ansible.com/tag/YOUR_TAG): subscribe to participate in collection/technology-related conversations.
-  * [Refer to your forum group here if exists](https://forum.ansible.com/g/): by joining the team you will automatically get subscribed to the posts tagged with [your group forum tag here](https://forum.ansible.com/tags).
-  * [Social Spaces](https://forum.ansible.com/c/chat/4): gather and interact with fellow enthusiasts.
-  * [News & Announcements](https://forum.ansible.com/c/news/5): track project-wide announcements including social events. The [Bullhorn newsletter](https://docs.ansible.com/projects/ansible/devel/community/communication.html#the-bullhorn), which is used to announce releases and important changes, can also be found here.
-
-For more information about communication, see the [Ansible communication guide](https://docs.ansible.com/projects/ansible/devel/community/communication.html).
-
-## Contributing to this collection
-
-<!--Describe how the community can contribute to your collection. At a minimum, fill up and include the CONTRIBUTING.md file containing how and where users can create issues to report problems or request features for this collection. List contribution requirements, including preferred workflows and necessary testing, so you can benefit from community PRs. If you are following general Ansible contributor guidelines, you can link to - [Ansible Community Guide](https://docs.ansible.com/projects/ansible/devel/community/index.html). List the current maintainers (contributors with write or higher access to the repository). The following can be included:-->
-
-The content of this collection is made by people like you, a community of individuals collaborating on making the world better through developing automation software.
-
-We are actively accepting new contributors and all types of contributions are very welcome.
-
-Don't know how to start? Refer to the [Ansible community guide](https://docs.ansible.com/projects/ansible/devel/community/index.html)!
-
-Want to submit code changes? Take a look at the [Quick-start development guide](https://docs.ansible.com/projects/ansible/devel/community/create_pr_quick_start.html).
-
-We also use the following guidelines:
-
-* [Collection review checklist](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_reviewing.html)
-* [Ansible development guide](https://docs.ansible.com/projects/ansible/devel/dev_guide/index.html)
-* [Ansible collection development guide](https://docs.ansible.com/projects/ansible/devel/dev_guide/developing_collections.html#contributing-to-collections)
-
-## Collection maintenance
-
-The current maintainers are listed in the [MAINTAINERS](MAINTAINERS) file. If you have questions or need help, feel free to mention them in the proposals.
-
-To learn how to maintain/become a maintainer of this collection, refer to the [Maintainer guidelines](https://docs.ansible.com/projects/ansible/devel/community/maintainers.html).
-
-It is necessary for maintainers of this collection to be subscribed to:
-
-* The collection itself (the `Watch` button -> `All Activity` in the upper right corner of the repository's homepage).
-* The [news-for-maintainers repository](https://github.com/ansible-collections/news-for-maintainers).
-
-They also should be subscribed to Ansible's [The Bullhorn newsletter](https://docs.ansible.com/projects/ansible/devel/community/communication.html#the-bullhorn).
-
-## Governance
-
-<!--Describe how the collection is governed. Here can be the following text:-->
-
-The process of decision making in this collection is based on discussing and finding consensus among participants.
-
-Every voice is important. If you have something on your mind, create an issue or dedicated discussion and let's discuss it!
-
-## Tested with Ansible
-
-<!-- List the versions of Ansible the collection has been tested with. Must match what is in galaxy.yml. -->
-
-## External requirements
-
-<!-- List any external resources the collection depends on, for example minimum versions of an OS, libraries, or utilities. Do not list other Ansible collections here. -->
-
-### Supported connections
-<!-- Optional. If your collection supports only specific connection types (such as HTTPAPI, netconf, or others), list them here. -->
-
-## Included content
-
-<!-- Galaxy now usually displays full module and plugin docs within the UI. If you don't use Galaxy for your collection, you may need to either describe your plugins etc here, or point to an external docsite to cover that information. -->
-
-## Using this collection
-
-<!--Include some quick examples that cover the most common use cases for your collection content. It can include the following examples of installation and upgrade (change NAMESPACE.COLLECTION_NAME correspondingly):-->
-
-### Installing the Collection from Ansible Galaxy
-
-Before using this collection, you need to install it with the Ansible Galaxy command-line tool:
 ```bash
-ansible-galaxy collection install NAMESPACE.COLLECTION_NAME
+ansible-galaxy collection install shahargolshani.artifactory
 ```
 
-You can also include it in a `requirements.yml` file and install it with `ansible-galaxy collection install -r requirements.yml`, using the format:
+Or add it to a `requirements.yml` file:
+
 ```yaml
 ---
 collections:
-  - name: NAMESPACE.COLLECTION_NAME
+  - name: shahargolshani.artifactory
 ```
 
-Note that if you install the collection from Ansible Galaxy, it will not be upgraded automatically when you upgrade the `ansible` package. To upgrade the collection to the latest available version, run the following command:
-```bash
-ansible-galaxy collection install NAMESPACE.COLLECTION_NAME --upgrade
-```
-
-You can also install a specific version of the collection, for example, if you need to downgrade when something is broken in the latest version (please report an issue in this repository). Use the following syntax to install version `0.1.0`:
+and install with:
 
 ```bash
-ansible-galaxy collection install NAMESPACE.COLLECTION_NAME:==0.1.0
+ansible-galaxy collection install -r requirements.yml
 ```
 
-See [using Ansible collections](https://docs.ansible.com/projects/ansible/devel/user_guide/collections_using.html) for more details.
+## Authentication and connection setup
+
+This collection uses the `httpapi` connection plugin, so Artifactory connection details are configured in your inventory rather than passed to each task. Two authentication methods are supported:
+
+- **Bearer token** — set `ansible_httpapi_token`
+- **Basic auth** — set `ansible_user` and `ansible_password`
+
+Example inventory:
+
+```ini
+[artifactory]
+https://repo.example.com
+
+[artifactory:vars]
+ansible_connection=httpapi
+ansible_network_os=shahargolshani.artifactory.artifactory_api_client
+ansible_httpapi_use_ssl=true
+ansible_httpapi_validate_certs=false
+ansible_httpapi_token=<your-token>
+```
+
+Store tokens and passwords in [Ansible Vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html) rather than plain text inventory.
+
+## Included content
+
+### HttpApi plugins
+
+| Name | Description |
+| --- | --- |
+| [artifactory_api_client](plugins/httpapi/artifactory_api_client.py) | Handles authentication and request/response plumbing for the Artifactory REST API. |
+
+### Modules
+
+| Name | Description |
+| --- | --- |
+| [artifactory_download](plugins/modules/artifactory_download.py) | Downloads an artifact from an Artifactory repository to the Ansible controller, with checksum-based idempotency. |
+
+## Usage example
+
+```yaml
+- name: Download an artifact from Artifactory
+  shahargolshani.artifactory.artifactory_download:
+    repo: my-generic-repo
+    path: my-project/1.0.0
+    name: artifact-1.0.0.rpm
+    dest: /tmp/artifacts
+
+- name: Force re-download even if a matching file already exists
+  shahargolshani.artifactory.artifactory_download:
+    repo: my-generic-repo
+    path: my-project/1.0.0
+    name: artifact-1.0.0.rpm
+    dest: /tmp/artifacts
+    force: true
+
+- name: Download an artifact and save its Artifactory metadata alongside it
+  shahargolshani.artifactory.artifactory_download:
+    repo: my-generic-repo
+    path: my-project/1.0.0
+    name: artifact-1.0.0.rpm
+    dest: /tmp/artifacts
+    metadata: true
+```
+
+`artifactory_download` compares the local file's SHA-256 checksum against the one reported by Artifactory and skips the download if they already match (unless `force: true`), and supports `check_mode`.
+
+## Testing
+
+Sanity and unit tests run in CI (`.github/workflows/ansible-test.yml`) against ansible-core `stable-2.18`, `stable-2.19`, `stable-2.20`, and `devel`:
+
+```bash
+ansible-test sanity --docker default
+ansible-test unit --docker default
+```
+
+Integration tests live under `tests/integration/targets/artifactory_download/` and require a reachable Artifactory instance; they are not currently run in CI. They cover first download, idempotency, forced re-download, check mode, a missing-artifact error, and an invalid-token error. To run them, configure `tests/integration/inventory.networking` and the test variables in `tests/integration/targets/artifactory_download/vars/main.yml` with your own Artifactory details, then run:
+
+```bash
+ansible-test integration --docker default
+```
+
+## Contributing
+
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Release notes
 
-See the [changelog](https://github.com/ansible-collections/REPONAMEHERE/tree/main/CHANGELOG.rst).
+See the [changelog](CHANGELOG.rst).
 
-## Roadmap
-
-<!-- Optional. Include the roadmap for this collection, and the proposed release/versioning strategy so users can anticipate the upgrade/update cycle. -->
-
-## More information
-
-<!-- List out where the user can find additional information, such as working group meeting times, slack/IRC channels, or documentation for the product this collection automates. At a minimum, link to: -->
-
-- [Ansible user guide](https://docs.ansible.com/projects/ansible/devel/user_guide/index.html)
-- [Ansible developer guide](https://docs.ansible.com/projects/ansible/devel/dev_guide/index.html)
-- [Ansible collections requirements](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html)
-- [Ansible community Code of Conduct](https://docs.ansible.com/projects/ansible/devel/community/code_of_conduct.html)
-- [The Bullhorn (the Ansible contributor newsletter)](https://docs.ansible.com/projects/ansible/devel/community/communication.html#the-bullhorn)
-- [Important announcements for maintainers](https://github.com/ansible-collections/news-for-maintainers)
-
-## Licensing
-
-<!-- Include the appropriate license information here and a pointer to the full licensing details. If the collection contains modules migrated from the ansible/ansible repo, you must use the same license that existed in the ansible/ansible repo. See the GNU license example below. -->
+## License
 
 GNU General Public License v3.0 or later.
 
-See [LICENSE](https://www.gnu.org/licenses/gpl-3.0.txt) to see the full text.
+See [LICENSE](LICENSE) for the full text.
+
+## Authors
+
+- Shahar Golshani
+- Ilya Shavkonov
